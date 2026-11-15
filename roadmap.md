@@ -1,6 +1,6 @@
 # Yönetim paneli
 - [ ] Kalıcı menü ve kategori yönetimi
-- [ ] Güvenli giriş ve yönetici yetkisi
+- [ ] E-posta, hesap veya şifre gerektirmeyen yönetim paneli
 - [ ] Menü QR kodu ve indirme
+- [ ] QR bağlantısından hesapsız misafir menüsü
 - [ ] Mobil ve masaüstü kontrolü
-- [ ] Kullanıcının yönetici hesabı: e-posta adresi bekleniyor
