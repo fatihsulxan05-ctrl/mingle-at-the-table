@@ -1,14 +1,18 @@
-# Welcome to your Lovable project
+# Mingle At The Table
+
+https://github.com/hararmuti-cmd/menu-mingle.git LÜTFEN ŞU GİHUB PROJESİNİ İÇERE AKTAR
 
 This project was built with [Lovable](https://lovable.dev).
 
+**Live app**: https://mingle-at-the-table.lovable.app
+
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/193ac06b-1f9b-418a-8f39-c1178caa407d).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +24,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
