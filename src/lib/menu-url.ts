@@ -1,3 +1,5 @@
+export const publishedMenuUrl = "https://mingle-at-the-table.lovable.app/";
+
 export function guestMenuUrl(origin: string): string | null {
   try {
     const url = new URL(origin);
@@ -7,4 +9,8 @@ export function guestMenuUrl(origin: string): string | null {
   } catch {
     return null;
   }
+}
+
+export function resolvedGuestMenuUrl(origin: string): string {
+  return guestMenuUrl(origin) ?? publishedMenuUrl;
 }

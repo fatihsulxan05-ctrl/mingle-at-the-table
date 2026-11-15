@@ -33,3 +33,4 @@ use the editor.
 
 - Keep menu management at the public `/dashboard` route and use publishable-key server functions with menu-table RLS; this supports credential-free management without exposing privileged account access.
 - Keep the guest menu at `/` and filter out unavailable products in its server function; the QR code must target this public menu, never the management or sign-in page.
+- Resolve QR destinations to the current public origin, with the verified deployment URL as the editor-preview fallback; this prevents printed codes from pointing to an editor sign-in wall.
