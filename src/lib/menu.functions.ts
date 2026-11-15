@@ -1,23 +1,25 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { itemSchema, categorySchema, canManageMenu } from "./menu-schema";
+import { itemSchema, categorySchema } from "./menu-schema";
 
-export const getMenu = createServerFn({ method: "GET" }).handler(async () => {
-  const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
-  const url = process.env['SUPABASE_URL'];
+const createMenuClient = createServerOnlyFn((url: string | undefined, key: string | undefined) => {
   if (!key || !url) throw new Error("Menü bağlantısı kurulamadı.");
-  const client = createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
+  return createClient<Database>(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     global: { fetch: (input, init) => {
-      const headers = new Headers(init?.headers);
+      const headers = new Headers(input instanceof Request ? input.headers : undefined);
+      new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
       if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
       headers.set("apikey", key);
       return fetch(input, { ...init, headers });
     } },
   });
+});
+
+export const getMenu = createServerFn({ method: "GET" }).handler(async () => {
+  const client = createMenuClient(process.env['SUPABASE_URL'], process.env['SUPABASE_PUBLISHABLE_KEY']);
   const [categories, items] = await Promise.all([
     client.from("menu_categories").select("*").order("position"),
     client.from("menu_items").select("*").eq("available", true).order("position"),
@@ -26,37 +28,35 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async () => {
   return { categories: categories.data ?? [], items: items.data ?? [] };
 });
 
-export const getDashboard = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
-  const { data: role, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-  if (error) throw new Error("Yetki kontrol edilemedi.");
+// Management is intentionally public at the owner's request. The publishable
+// client can access only the menu tables allowed by their explicit RLS policies.
+export const getDashboard = createServerFn({ method: "GET" }).handler(async () => {
+  const client = createMenuClient(process.env['SUPABASE_URL'], process.env['SUPABASE_PUBLISHABLE_KEY']);
   const [categories, items] = await Promise.all([
-    context.supabase.from("menu_categories").select("*").order("position"),
-    context.supabase.from("menu_items").select("*").order("position"),
+    client.from("menu_categories").select("*").order("position"),
+    client.from("menu_items").select("*").order("position"),
   ]);
   if (categories.error || items.error) throw new Error("Panel yüklenemedi.");
-  return { isAdmin: canManageMenu(role ?? false), categories: categories.data ?? [], items: items.data ?? [] };
+  return { categories: categories.data ?? [], items: items.data ?? [] };
 });
 
-export const saveItem = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input) => itemSchema.parse(input)).handler(async ({ context, data }) => {
-  const { data: role } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-  if (!canManageMenu(role ?? false)) throw new Error("Yönetici yetkisi gerekiyor.");
+export const saveItem = createServerFn({ method: "POST" }).inputValidator((input) => itemSchema.parse(input)).handler(async ({ data }) => {
+  const client = createMenuClient(process.env['SUPABASE_URL'], process.env['SUPABASE_PUBLISHABLE_KEY']);
   const { id, ...values } = data;
-  const result = id ? await context.supabase.from("menu_items").update(values).eq("id", id).select("id").single() : await context.supabase.from("menu_items").insert(values).select("id").single();
+  const result = id ? await client.from("menu_items").update(values).eq("id", id).select("id").single() : await client.from("menu_items").insert(values).select("id").single();
   if (result.error) throw new Error("Ürün kaydedilemedi.");
   return result.data;
 });
-export const saveCategory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input) => categorySchema.parse(input)).handler(async ({ context, data }) => {
-  const { data: role } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-  if (!canManageMenu(role ?? false)) throw new Error("Yönetici yetkisi gerekiyor.");
+export const saveCategory = createServerFn({ method: "POST" }).inputValidator((input) => categorySchema.parse(input)).handler(async ({ data }) => {
+  const client = createMenuClient(process.env['SUPABASE_URL'], process.env['SUPABASE_PUBLISHABLE_KEY']);
   const { id, ...values } = data;
-  const result = id ? await context.supabase.from("menu_categories").update(values).eq("id", id).select("id").single() : await context.supabase.from("menu_categories").insert(values).select("id").single();
+  const result = id ? await client.from("menu_categories").update(values).eq("id", id).select("id").single() : await client.from("menu_categories").insert(values).select("id").single();
   if (result.error) throw new Error("Kategori kaydedilemedi.");
   return result.data;
 });
-export const deleteEntry = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input) => z.object({ id: z.string(), kind: z.enum(["item", "category"]) }).parse(input)).handler(async ({ context, data }) => {
-  const { data: role } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-  if (!canManageMenu(role ?? false)) throw new Error("Yönetici yetkisi gerekiyor.");
-  const result = await context.supabase.from(data.kind === "item" ? "menu_items" : "menu_categories").delete().eq("id", data.id).select("id").single();
+export const deleteEntry = createServerFn({ method: "POST" }).inputValidator((input) => z.object({ id: z.string().min(1), kind: z.enum(["item", "category"]) }).parse(input)).handler(async ({ data }) => {
+  const client = createMenuClient(process.env['SUPABASE_URL'], process.env['SUPABASE_PUBLISHABLE_KEY']);
+  const result = await client.from(data.kind === "item" ? "menu_items" : "menu_categories").delete().eq("id", data.id).select("id").single();
   if (result.error) throw new Error(data.kind === "category" ? "Önce bu kategorideki ürünleri taşıyın veya silin." : "Ürün silinemedi.");
   return { ok: true };
 });

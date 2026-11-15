@@ -14,4 +14,3 @@ export const itemSchema = z.object({
   message: "Eski fiyat satış fiyatından yüksek olmalı.", path: ["old_price"],
 });
 export const categorySchema = z.object({ id: z.string().optional(), name: z.string().trim().min(1).max(80), position: z.number().int().nonnegative() });
-export function canManageMenu(isAdmin: boolean) { return isAdmin === true; }
