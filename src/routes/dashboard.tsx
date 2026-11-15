@@ -57,7 +57,12 @@ function Dashboard() {
   }
   function downloadQr() {
     const svg = qr.current?.querySelector("svg"); if (!svg) return;
-    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
+    const exported = svg.cloneNode(true);
+    if (!(exported instanceof SVGElement)) return;
+    const colors = getComputedStyle(document.documentElement);
+    exported.style.setProperty("--qr-background", colors.getPropertyValue("--qr-background"));
+    exported.style.setProperty("--qr-foreground", colors.getPropertyValue("--qr-foreground"));
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(exported)], { type: "image/svg+xml" }));
     const link = document.createElement("a"); link.href = url; link.download = "kahve-menu-qr.svg"; link.click(); URL.revokeObjectURL(url);
   }
   const products = data.items.filter((i) => (!filter || i.category_id === filter) && i.name.toLocaleLowerCase("tr").includes(search.toLocaleLowerCase("tr")));
