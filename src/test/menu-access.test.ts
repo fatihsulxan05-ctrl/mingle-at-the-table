@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { guestMenuUrl } from "@/lib/menu-url";
+import { guestMenuUrl, resolvedGuestMenuUrl } from "@/lib/menu-url";
 
 const database = vi.hoisted(() => ({
   categories: [{ id: "coffee", name: "Kahve", position: 1 }],
@@ -83,5 +83,10 @@ describe("Passwordless menu access", () => {
   it("does not give guests an editor preview QR that might require sign-in", () => {
     expect(guestMenuUrl("https://id-preview--example.lovable.app")).toBeNull();
     expect(guestMenuUrl("http://localhost:8080")).toBeNull();
+  });
+
+  it("uses the published guest menu for QR codes viewed in the editor", () => {
+    expect(resolvedGuestMenuUrl("https://id-preview--example.lovable.app")).toBe("https://mingle-at-the-table.lovable.app/");
+    expect(resolvedGuestMenuUrl("http://localhost:8080")).toBe("https://mingle-at-the-table.lovable.app/");
   });
 });
