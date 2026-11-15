@@ -1,6 +1,8 @@
 # Yönetim paneli
-- [ ] Kalıcı menü ve kategori yönetimi
-- [ ] E-posta, hesap veya şifre gerektirmeyen yönetim paneli
+- [x] Kalıcı menü ve kategori yönetimi
+- [x] E-posta, hesap veya şifre gerektirmeyen yönetim paneli
 - [ ] Menü QR kodu ve indirme
-- [ ] QR bağlantısından hesapsız misafir menüsü
-- [ ] Mobil ve masaüstü kontrolü
+- [x] QR bağlantısından hesapsız misafir menüsü
+- [x] Mobil ve masaüstü kontrolü
+
+QR kodu yayına hazır; gerçek misafir bağlantısı için sitenin yayınlanması bekleniyor.
